@@ -41,6 +41,7 @@ try:
 finally:
 	print("Powering down sensor and ADC.")
 	GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
+	logfile.close()
 
 	# Explicitly do not cleanup.  This leaves the pins low, and thus the devices unpowered.
 	#GPIO.cleanup()
