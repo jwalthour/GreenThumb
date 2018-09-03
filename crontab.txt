@@ -1,3 +1,3 @@
 # Append this to /etc/crontab
 # m h dom mon dow user  command
-*/5 *	* * *	root	/usr/bin/python /home/gardener/check_moisture_once.py
+*/5 *	* * *	root	/usr/bin/python /home/gardener/check_and_water_once.py
