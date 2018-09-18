@@ -3,14 +3,17 @@ Check the moisture sensors exactly once.  Log to file.  If sensor 0 reports mois
 threshold, dispense water for a fixed amount of time.
 """
 
-print("importing")
+from __future__ import print_function
+print("Importing... ", end='')
 import datetime 
 import time
 import os.path
 import RPi.GPIO as GPIO
 import Adafruit_ADS1x15 # sudo pip install adafruit-ads1x15
+print("done.")
 
-print("GPIO setup")
+print("GPIO setup... ", end='')
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 ADC_PIN_NUM = 7
 SENSE_PIN_0 = 13
@@ -26,19 +29,23 @@ GPIO.output([PIN_ENA,
 			PIN_IN2], GPIO.LOW)
 
 GPIO.setup([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1], GPIO.OUT)
+print("done.")
 
 LOGFILE='/home/gardener/watering_log.csv'
-print("Opening log file")
+print("Opening log file... ", end='')
 existed_already = os.path.isfile(LOGFILE)
 logfile = open(LOGFILE, 'a')
 if not existed_already:
 	# This is our first time opening the file; print CSV header
 	logfile.write('time,"ADC0","ADC1","moisture 0","moisture 1","watered?"\r\n')
+print("done.")
 
 # Power on sensor and ADC
-print("Connecting to ADC")
+print("Connecting to ADC... ", end='')
 GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
 adc = Adafruit_ADS1x15.ADS1015(0x48)
+print("done.")
+
 
 # Value, in ADC ticks, corresponding to saturated soil
 ADC_WETTEST_READING=1340.0
@@ -47,6 +54,9 @@ WATERING_THRESHOLD_FRAC = 0.75
 # The number of seconds for which the pump should be run in one watering.
 WATERING_PUMP_DURATION_S = 1.5
 
+# Number of times to sample the sensor
+NUM_SAMPLES = 500
+SAMPLE_INTERVAL_S = 1
 
 def dispense_water():
 	try:
@@ -65,18 +75,26 @@ def dispense_water():
 		
 
 try:
-	log_line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S",')
-	moistures_ticks = [adc.read_adc(chan) for chan in [0,1]]
-	log_line += str(moistures_ticks[0]) + ',' + str(moistures_ticks[1]) + ','
-	moistures_frac = [(m / ADC_WETTEST_READING) for m in moistures_ticks]
-	log_line += str(moistures_frac[0]) + ',' + str(moistures_frac[1]) + ','
-	water = moistures_frac[0] < WATERING_THRESHOLD_FRAC
-	log_line += str(water) + ','
-	log_line += '\r\n'
+	print("Taking readings... ", end='')
+	water = False
+	accum_moisture = 0;
+	for i in range(0, NUM_SAMPLES):
+		log_line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S.%f",')
+		moistures_ticks = [adc.read_adc(chan) for chan in [0,1]]
+		log_line += str(moistures_ticks[0]) + ',' + str(moistures_ticks[1]) + ','
+		moistures_frac = [(m / ADC_WETTEST_READING) for m in moistures_ticks]
+		log_line += str(moistures_frac[0]) + ',' + str(moistures_frac[1]) + ','
+		# water = moistures_frac[0] < WATERING_THRESHOLD_FRAC
+		# log_line += str(water) + ','
+		log_line += '\r\n'
+		# print(log_line)
+		logfile.write(log_line)
+		time.sleep(SAMPLE_INTERVAL_S);
 	# Log and flush prior to running the motor, in case something happens during that.
-	logfile.write(log_line)
 	logfile.close()
 	logfile = None
+	print("done.")
+
 	if water:
 		dispense_water()
 finally:
