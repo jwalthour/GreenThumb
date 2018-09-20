@@ -42,7 +42,7 @@ print("done.")
 
 # Power on sensor and ADC
 print("Connecting to ADC... ", end='')
-GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
+GPIO.output([ADC_PIN_NUM],GPIO.HIGH)
 adc = Adafruit_ADS1x15.ADS1015(0x48)
 print("done.")
 
@@ -56,7 +56,7 @@ WATERING_PUMP_DURATION_S = 1.5
 
 # Number of times to sample the sensor
 NUM_SAMPLES = 500
-SAMPLE_INTERVAL_S = 1
+SAMPLE_INTERVAL_S = 0.1
 
 def dispense_water():
 	try:
@@ -80,7 +80,9 @@ try:
 	accum_moisture = 0;
 	for i in range(0, NUM_SAMPLES):
 		log_line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S.%f",')
+		GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
 		moistures_ticks = [adc.read_adc(chan) for chan in [0,1]]
+		GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
 		log_line += str(moistures_ticks[0]) + ',' + str(moistures_ticks[1]) + ','
 		moistures_frac = [(m / ADC_WETTEST_READING) for m in moistures_ticks]
 		log_line += str(moistures_frac[0]) + ',' + str(moistures_frac[1]) + ','
@@ -98,8 +100,10 @@ try:
 	if water:
 		dispense_water()
 finally:
-	print("Powering down sensor and ADC.")
-	GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
+	# print("Powering down sensor and ADC.")
+	# GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
+	print("Powering down sensors.")
+	GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
 	if logfile:
 		logfile.close()
 
