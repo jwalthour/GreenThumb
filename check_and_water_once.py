@@ -6,6 +6,7 @@ threshold, dispense water for a fixed amount of time.
 from __future__ import print_function
 print("Importing... ", end='')
 import datetime 
+import sys
 import time
 import os.path
 import RPi.GPIO as GPIO
@@ -37,7 +38,8 @@ existed_already = os.path.isfile(LOGFILE)
 logfile = open(LOGFILE, 'a')
 if not existed_already:
 	# This is our first time opening the file; print CSV header
-	logfile.write('time,"ADC0","ADC1","moisture 0","moisture 1","watered?"\r\n')
+	# logfile.write('time,"ADC0","ADC1","moisture 0","moisture 1","watered?"\r\n')
+	logfile.write('time,"ADC0","ADC1"\r\n')
 print("done.")
 
 # Power on sensor and ADC
@@ -76,23 +78,28 @@ def dispense_water():
 
 try:
 	print("Taking readings... ", end='')
+	sys.stdout.flush()
 	water = False
-	accum_moisture = 0;
+	accum_moisture_ticks = [0,0];
+	# accum_moisture_frac = 0;
 	for i in range(0, NUM_SAMPLES):
-		log_line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S.%f",')
 		GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
 		moistures_ticks = [adc.read_adc(chan) for chan in [0,1]]
 		GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.LOW)
-		log_line += str(moistures_ticks[0]) + ',' + str(moistures_ticks[1]) + ','
-		moistures_frac = [(m / ADC_WETTEST_READING) for m in moistures_ticks]
-		log_line += str(moistures_frac[0]) + ',' + str(moistures_frac[1]) + ','
+		# not pythonic, i know. we only have two sensors, give me a break.
+		accum_moisture_ticks[0] += moistures_ticks[0]
+		accum_moisture_ticks[1] += moistures_ticks[1]
+		# moistures_frac = [(m / ADC_WETTEST_READING) for m in moistures_ticks]
 		# water = moistures_frac[0] < WATERING_THRESHOLD_FRAC
 		# log_line += str(water) + ','
-		log_line += '\r\n'
 		# print(log_line)
-		logfile.write(log_line)
 		time.sleep(SAMPLE_INTERVAL_S);
 	# Log and flush prior to running the motor, in case something happens during that.
+	moistures_ticks_avg = [accum / NUM_SAMPLES for accum in accum_moisture_ticks]
+	log_line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S.%f",')
+	log_line += str(moistures_ticks_avg[0]) + ',' + str(moistures_ticks_avg[1]) + ','
+	log_line += '\r\n'
+	logfile.write(log_line)
 	logfile.close()
 	logfile = None
 	print("done.")
