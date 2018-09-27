@@ -80,7 +80,7 @@ try:
 	print("Taking readings... ", end='')
 	sys.stdout.flush()
 	water = False
-	accum_moisture_ticks = [0,0];
+	accum_moisture_ticks = [0.0,0.0];
 	# accum_moisture_frac = 0;
 	for i in range(0, NUM_SAMPLES):
 		GPIO.output([SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
