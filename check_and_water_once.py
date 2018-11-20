@@ -41,7 +41,8 @@ GPIO.output([ADC_PIN_NUM,SENSE_PIN_0,SENSE_PIN_1],GPIO.HIGH)
 adc = Adafruit_ADS1x15.ADS1015(0x48)
 
 # Value, in ADC ticks, corresponding to saturated soil
-ADC_WETTEST_READING=1340.0
+# ADC_WETTEST_READING=1340.0
+ADC_WETTEST_READING=1
 # Moisture fraction at which water is dispensed
 WATERING_THRESHOLD_FRAC = 0.75
 # The number of seconds for which the pump should be run in one watering.

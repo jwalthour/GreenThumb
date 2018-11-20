@@ -23,7 +23,7 @@ existed_already = os.path.isfile(LOGFILE)
 logfile = open(LOGFILE, 'a')
 if not existed_already:
 	# This is our first time opening the file; print CSV header
-	logfile.write("time,0,1\r\n")
+	logfile.write("time,3\r\n")
 
 # Power on sensor and ADC
 print("Connecting to ADC")
@@ -35,7 +35,7 @@ ADC_WETTEST_READING=1340
 
 try:
 	line = datetime.datetime.now().strftime('"%Y-%m-%d %H:%M:%S",')
-	line += str(adc.read_adc(0)) + "," + str(adc.read_adc(1))
+	line += str(adc.read_adc(3))
 	line += '\r\n'
 	logfile.write(line)
 finally:
